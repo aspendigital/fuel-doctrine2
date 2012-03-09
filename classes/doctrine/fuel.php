@@ -137,4 +137,16 @@ class Doctrine_Fuel
 		
 		return static::$_managers[$connection];
 	}
+	
+	/**
+	 * @return array Doctrine version information
+	 */
+	public static function version_check()
+	{
+		return array(
+			'common' => \Doctrine\Common\Version::VERSION,
+			'dbal' => \Doctrine\DBAL\Version::VERSION,
+			'orm' => \Doctrine\ORM\Version::VERSION
+		);
+	}
 }
