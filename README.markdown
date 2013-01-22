@@ -7,14 +7,14 @@ To use, copy the included configuration files to your application directory and 
 After loading the package in your application, to get an EntityManager, use the following code:
 
 ```php
-$em = Doctrine_Fuel::manager(); // Uses the connection labeled 'default' in your configuration
-$em = Doctrine_Fuel::manager('connection_2'); // Specify connection explicitly
+$em = \Doctrine\Fuel::manager(); // Uses the connection labeled 'default' in your configuration
+$em = \Doctrine\Fuel::manager('connection_2'); // Specify connection explicitly
 ```
 
 Or you can check the versions of the Doctrine components:
 
 ```php
-print_r(Doctrine_Fuel::version_check());
+print_r(\Doctrine\Fuel::version_check());
 ```
 
 ## Versions:
