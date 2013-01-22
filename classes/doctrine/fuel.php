@@ -1,6 +1,6 @@
 <?php
 
-namespace Doctrine_Fuel;
+namespace Doctrine;
 
 /**
  * Convenience class to wrap Doctrine configuration with FuelPHP features.
@@ -10,18 +10,18 @@ namespace Doctrine_Fuel;
  * Example:
  * 
  * <code>
- * $em = Doctrine_Fuel::manager();
+ * $em = \Doctrine\Fuel::manager();
  * $em->createQuery(...);
  * </code>
  * 
  * Or to use a defined connection other than 'default'
  * <code>
- * $em = Doctrine_Fuel::manager('connection_name');
+ * $em = \Doctrine\Fuel::manager('connection_name');
  * $em->createQuery(...);
  * </code>
  * 
  */
-class Doctrine_Fuel
+class Fuel
 {
 	/** @var array */
 	protected static $_managers;

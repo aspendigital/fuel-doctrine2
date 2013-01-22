@@ -135,7 +135,7 @@ class PhpQuickProfiler {
 			try {
 				$sql = 'EXPLAIN '.$query['sql'];
 				// Due to premature security measures, we need to call html_entity_decode to make sure the explain works
-				$rs = \Doctrine_Fuel::manager()->getConnection()->executeQuery(html_entity_decode($sql))->fetch();
+				$rs = \Doctrine\Fuel::manager()->getConnection()->executeQuery(html_entity_decode($sql))->fetch();
 			}
 			catch(Exception $e)
 			{}
