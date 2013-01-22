@@ -1,6 +1,6 @@
 <?php
 
-namespace Doctrine\Fuel;
+namespace Fuel\Doctrine;
 
 /**
  * Log Doctrine DBAL queries to FuelPHP profiler
@@ -55,7 +55,7 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 			{
 				$final_sql .= substr($sql, $src_pos, $pos-$src_pos);
 				$src_pos = $pos + strlen($replace_name);
-				$final_sql .= \Doctrine\Fuel::manager()->getConnection()->quote( $params[ ltrim($replace_name, ':') ] );
+				$final_sql .= \Fuel\Doctrine::manager()->getConnection()->quote( $params[ ltrim($replace_name, ':') ] );
 			}
 
 			$final_sql .= substr($sql, $src_pos);

@@ -1,38 +1,38 @@
 <?php
 
-namespace Doctrine;
+namespace Fuel;
 
 /**
  * Convenience class to wrap Doctrine configuration with FuelPHP features.
  * I'm only trying to handle relatively simple usage here, so if your configuration needs
  * are more complicated, just extend/replace in your application
- * 
+ *
  * Example:
- * 
+ *
  * <code>
- * $em = \Doctrine\Fuel::manager();
+ * $em = \Fuel\Doctrine::manager();
  * $em->createQuery(...);
  * </code>
- * 
+ *
  * Or to use a defined connection other than 'default'
  * <code>
- * $em = \Doctrine\Fuel::manager('connection_name');
+ * $em = \Fuel\Doctrine::manager('connection_name');
  * $em->createQuery(...);
  * </code>
- * 
+ *
  */
-class Fuel
+class Doctrine
 {
 	/** @var array */
 	protected static $_managers;
-	
+
 	/** @var array */
 	protected static $settings;
 
 	/**
 	 * Map cache types to class names
 	 * Memcache/Memcached can't be set up automatically the way the other types can, so they're not included
-	 * 
+	 *
 	 * @var array
 	 */
 	protected static $cache_drivers = array(
@@ -42,7 +42,7 @@ class Fuel
 			'wincache'=>'WinCache',
 			'zend'=>'ZendDataCache'
 		);
-	
+
 	/**
 	 * Map metadata driver types to class names
 	 */
@@ -54,8 +54,7 @@ class Fuel
 			'xml'=>'XmlDriver',
 			'yaml'=>'YamlDriver'
 		);
-	
-	
+
 	/**
 	 * Read configuration and set up EntityManager singleton
 	 */
@@ -63,15 +62,14 @@ class Fuel
 	{
 		static::$settings = \Config::load('doctrine2', true);
 	}
-	
-	
+
 	public static function _init_manager($connection)
 	{
 		$settings = static::$settings;
-		
+
 		if (!isset($settings[$connection]))
 			throw new Exception('No connection configuration for '.$connection);
-		
+
 		$config = new \Doctrine\ORM\Configuration();
 		$cache = static::_init_cache();
 		if ($cache)
@@ -79,20 +77,20 @@ class Fuel
 			$config->setMetadataCacheImpl($cache);
 			$config->setQueryCacheImpl($cache);
 		}
-		
+
 		$config->setProxyDir($settings['proxy_dir']);
 		$config->setProxyNamespace($settings['proxy_namespace']);
 		$config->setAutoGenerateProxyClasses($settings['auto_generate_proxy_classes']);
 		$config->setMetadataDriverImpl(static::_init_metadata($config));
-		
+
 		static::$_managers[$connection] = \Doctrine\ORM\EntityManager::create($settings[$connection]['connection'], $config);
-		
+
 		if (!empty($settings[$connection]['profiling']))
 		{
 			static::$_managers[$connection]->getConnection()->getConfiguration()->setSQLLogger(new Logger($connection));
 		}
 	}
-	
+
 	/**
 	 * @return \Doctrine\Common\Cache|false
 	 */
@@ -103,14 +101,14 @@ class Fuel
 		{
 			if (!array_key_exists($type, static::$cache_drivers))
 				throw new \Exception('Invalid Doctrine2 cache driver: ' . $type);
-			
+
 			$class = '\\Doctrine\\Common\\Cache\\' . static::$cache_drivers[$type];
 			return new $class();
 		}
-		
+
 		return false;
 	}
-	
+
 	/**
 	 * @return \Doctrine\ORM\Mapping\Driver\Driver
 	 */
@@ -119,25 +117,25 @@ class Fuel
 		$type = \Arr::get(static::$settings, 'metadata_driver', 'annotation');
 		if (!array_key_exists($type, static::$metadata_drivers))
 			throw new \Exception('Invalid Doctrine2 metadata driver: ' . $type);
-		
+
 		if ($type == 'annotation')
 			return $config->newDefaultAnnotationDriver(static::$settings['metadata_path']);
-			
+
 		$class = '\\Doctrine\\ORM\\Mapping\\Driver\\' . static::$metadata_drivers[$type];
 		return new $class($settings['metadata_path']);
 	}
-	
+
 	/**
 	 * @return \Doctrine\ORM\EntityManager
 	 */
 	public static function manager($connection = 'default')
 	{
 		if (!isset(static::$_managers[$connection]))
-			static::_init_manager($connection); 
-		
+			static::_init_manager($connection);
+
 		return static::$_managers[$connection];
 	}
-	
+
 	/**
 	 * @return array Doctrine version information
 	 */
