@@ -33,6 +33,13 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 			// (this is not perfect-- getPlaceholderPositions has some flaws-- but it should generally work with ORM-generated queries)
 
 			$is_positional = is_numeric(key($params));
+			if (is_null($types)) {
+				$types = array();
+				$params = array_values($params);
+				foreach ($params as $k => $p) {
+					$types[$k] = gettype($p);
+				}
+			}
 			list($sql, $params, $types) = \Doctrine\DBAL\SQLParserUtils::expandListParameters($sql, $params, $types);
 			$placeholders = \Doctrine\DBAL\SQLParserUtils::getPlaceholderPositions($sql, $is_positional);
 
@@ -55,7 +62,20 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 			{
 				$final_sql .= substr($sql, $src_pos, $pos-$src_pos);
 				$src_pos = $pos + strlen($replace_name);
-				$final_sql .= \Fuel\Doctrine::manager()->getConnection()->quote( $params[ ltrim($replace_name, ':') ] );
+
+				$current_param = $params[ltrim($replace_name, ':')];
+				$param_type = gettype($current_param);
+				if ($param_type == 'object') {
+					$param_class = get_class($current_param);
+					if ($param_class == 'DateTime') {
+						$current_param = $current_param->format('Y-m-d H:i:s');
+					} else {
+						$current_param = serialize($current_param);
+					};
+				} elseif ($param_type == 'array') {
+					$current_param = serialize($current_param);
+				}
+				$final_sql .= \Fuel\Doctrine::manager()->getConnection()->quote($current_param);
 			}
 
 			$final_sql .= substr($sql, $src_pos);
