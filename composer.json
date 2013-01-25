@@ -1,0 +1,14 @@
+{
+    "name": "aspendigital/fuel-doctrine2",
+    "type": "library",
+    "description": "Doctrine2 integration with FuelPHP",
+    "license": "LGPL-2.1+",
+    "require": {
+        "symfony/yaml": "dev-master",
+        "doctrine/orm": "dev-master"
+    },
+    "autoload": {
+        "psr-0": { "Fuel": "classes/" }
+    },
+    "minimum-stability": "dev"
+}
