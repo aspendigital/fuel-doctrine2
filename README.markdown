@@ -73,7 +73,7 @@ return array(
 );
 ```
 
-For these refer to [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/configuration.html) and [Doctrine DBAL](https://github.com/doctrine/dbal/blob/master/docs/en/reference/configuration.rst) documentation
+For these refer to [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/configuration.html) and [Doctrine DBAL](http://docs.doctrine-project.org/projects/doctrine-dbal/en/latest/reference/configuration.html) documentation
 * `proxy_dir` - [C][G]
 * `proxy_namespace` - [C][G]
 * `metadata_path` - [C][G]

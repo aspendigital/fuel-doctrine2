@@ -32,7 +32,9 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 			// Attempt to replace placeholders so that we can log a final SQL query for profiler's EXPLAIN statement
 			// (this is not perfect-- getPlaceholderPositions has some flaws-- but it should generally work with ORM-generated queries)
 
-			$is_positional = is_numeric(key($params));
+			$is_positional = is_int(key($params));
+			if ($is_positional)
+				$params = array_values($params);
 			if (is_null($types)) {
 				$types = array();
 				$params = array_values($params);
