@@ -140,7 +140,7 @@ Refer to the [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm
 * `proxy_dir`: the directory containing your proxy classes 
 * `proxy_namespace`: the namespace where the proxy classes reside
 * `metadata_path`: the directory containing your metadata
-* `metadata_driver: options are 'annotation' (default), 'php', 'simplified_xml', 'simplified_yaml', 'xml', 'yaml'
+* `metadata_driver`: options are 'annotation' (default), 'php', 'simplified_xml', 'simplified_yaml', 'xml', 'yaml'
 * `auto_generate_proxy_classes`: true/false for whether Doctrine should generate proxy classes for entities it loads
 * `cache_driver`: options are 'array' (default), 'apc', 'xcache', 'wincache', 'zend'
 
