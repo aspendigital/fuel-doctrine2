@@ -4,11 +4,10 @@
     "description": "Doctrine2 integration with FuelPHP",
     "license": "LGPL-2.1+",
     "require": {
-        "symfony/yaml": "dev-master",
-        "doctrine/orm": "dev-master"
+        "doctrine/orm": ">=2.3.0"
     },
     "autoload": {
         "psr-0": { "Fuel": "classes/" }
     },
-    "minimum-stability": "dev"
+    "minimum-stability": "stable"
 }
