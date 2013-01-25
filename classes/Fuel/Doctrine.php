@@ -71,20 +71,17 @@ class Doctrine
 
 		$config = new \Doctrine\ORM\Configuration();
 
-		if (!empty($settings['enable_cache']))
+		$cache = static::_init_cache($settings);
+		if ($cache)
 		{
-			$cache = static::_init_cache($settings);
-			if ($cache)
-			{
-				$config->setMetadataCacheImpl($cache);
-				$config->setQueryCacheImpl($cache);
-				$config->setResultCacheImpl($cache);
-			}
+			$config->setMetadataCacheImpl($cache);
+			$config->setQueryCacheImpl($cache);
+			$config->setResultCacheImpl($cache);
 		}
 
 		$config->setProxyDir($settings['proxy_dir']);
 		$config->setProxyNamespace($settings['proxy_namespace']);
-		$config->setAutoGenerateProxyClasses(\Arr::get($settings,'auto_generate_proxy_classes',false));
+		$config->setAutoGenerateProxyClasses(\Arr::get($settings, 'auto_generate_proxy_classes', false));
 		$config->setMetadataDriverImpl(static::_init_metadata($config, $settings));
 
 		$EventManager = new \Doctrine\Common\EventManager();
@@ -92,9 +89,7 @@ class Doctrine
 		static::$_managers[$connection] = \Doctrine\ORM\EntityManager::create($settings['connection'], $config, $EventManager);
 
 		if (!empty($settings['profiling']))
-		{
 			static::$_managers[$connection]->getConnection()->getConfiguration()->setSQLLogger(new Doctrine\Logger($connection));
-		}
 	}
 
 	/**
@@ -124,12 +119,8 @@ class Doctrine
 		if (!array_key_exists($type, static::$metadata_drivers))
 			throw new DoctrineException('Invalid Doctrine2 metadata driver: ' . $type);
 
-		if ($type == 'annotation') {
-			$Reader = new \Doctrine\Common\Annotations\SimpleAnnotationReader();
-			$Reader->addNamespace('\Doctrine\ORM\Mapping');
-			$CachedReader = new \Doctrine\Common\Annotations\CachedReader($Reader);
-			return new AnnotationDriver($CachedReader, $connection_settings['metadata_path']);
-		}
+		if ($type == 'annotation')
+			return $config->newDefaultAnnotationDriver($connection_settings['metadata_path']);
 
 		$class = '\\Doctrine\\ORM\\Mapping\\Driver\\' . static::$metadata_drivers[$type];
 		return new $class($connection_settings['metadata_path']);
@@ -137,122 +128,60 @@ class Doctrine
 
 	public static function connection_settings($connection)
 	{
+		if (!isset(static::$settings['doctrine2']))
+			throw new DoctrineException('Missing "doctrine2" key in DB config');
+		
 		if (!isset(static::$settings[$connection]) or !isset(static::$settings[$connection]['connection']))
-			throw new DoctrineException('No connection configuration for '.$connection);
+			throw new DoctrineException("No connection configuration for '$connection'");
 
-		$settings = static::$settings[$connection];
-
-                if (!isset($settings['metadata_path']))
+		$connection_settings = static::$settings[$connection];
+		$settings = static::$settings['doctrine2'];
+		if (isset($connection_settings['doctrine2']))
 		{
-			if (!isset(static::$settings['metadata_path']) or !is_string(static::$settings['metadata_path']))
-				throw new DoctrineException('metadata_path not configured for '.$connection);
-			$settings['metadata_path'] = static::$settings['metadata_path'];
+			$settings = array_merge($settings, $connection_settings['doctrine2']);
+			unset($connection_settings['doctrine2']);
+		}
+				
+		// Required settings
+		foreach (array('metadata_path', 'proxy_dir', 'proxy_namespace') as $key)
+		{
+			if (!isset($settings[$key]))
+				throw new DoctrineException("'$key' not configured for connection '$connection'");
 		}
 
-                if (!isset($settings['proxy_dir']))
+		// Translate DB connection config to terms Doctrine understands
+		$options = array();
+		if (isset($connection_settings['type']))
 		{
-			if (!isset(static::$settings['proxy_dir']) or !is_string(static::$settings['proxy_dir']))
-				throw new DoctrineException('proxy_dir not configured for '.$connection);
-			$settings['proxy_dir'] = static::$settings['proxy_dir'];
-		}
-
-                if (!isset($settings['proxy_namespace']))
-		{
-			if (!isset(static::$settings['proxy_namespace']) or !is_string(static::$settings['proxy_namespace']))
-				throw new DoctrineException('proxy_namespace not configured for '.$connection);
-			$settings['proxy_namespace'] = static::$settings['proxy_namespace'];
-		}
-
-		if (!isset($settings['cache_driver']))
-		{
-			if (isset(static::$settings['cache_driver']) and is_string(static::$settings['cache_driver']))
-				$settings['cache_driver'] = static::$settings['cache_driver'];
-		}
-
-		if (!isset($settings['auto_generate_proxy_classes']))
-		{
-			if (isset(static::$settings['auto_generate_proxy_classes']) and !is_array(static::$settings['auto_generate_proxy_classes']))
-				$settings['auto_generate_proxy_classes'] = static::$settings['auto_generate_proxy_classes'];
-		}
-
-		if (!isset($settings['metadata_driver']))
-		{
-			if (isset(static::$settings['metadata_driver']) and is_string(static::$settings['metadata_driver']))
-				$settings['metadata_driver'] = static::$settings['metadata_driver'];
-		}
-
-		if (!isset($settings['profiling']))
-		{
-			if (isset(static::$settings['profiling']) and !is_array(static::$settings['profiling']))
-				$settings['profiling'] = static::$settings['profiling'];
-		}
-
-		if (!isset($settings['enable_cache']))
-		{
-			if (isset(static::$settings['enable_cache']) and !is_array(static::$settings['enable_cache']))
-				$settings['enable_cache'] = static::$settings['enable_cache'];
-		}
-
-		$options = Array();
-		$driver = null;
-
-		if (isset($settings['type']))
-		{
-			$options['user'] = \Arr::get($settings['connection'],'username', null);
-			switch ($settings['type']) {
+			$options['user'] = \Arr::get($connection_settings['connection'], 'username', null);
+			switch ($connection_settings['type'])
+			{
 				case 'mysql':
 				case 'mysqli':
-					$options['host'] = \Arr::get($settings['connection'],'hostname', null);
-					$options['dbname'] = \Arr::get($settings['connection'],'database', null);
-					$driver = 'pdo_mysql';
+					$options['host'] = \Arr::get($connection_settings['connection'], 'hostname', null);
+					$options['dbname'] = \Arr::get($connection_settings['connection'], 'database', null);
+					$options['driver'] = 'pdo_mysql';
 					break;
 				case 'pdo':
-					$parts = explode(':',\Arr::get($settings['connection'],'dsn',':'));
-					if (!in_array($parts[0],Array('mysql', 'sqlite', 'pgsql', 'oci', 'sqlsrv')))
+					$parts = explode(':', \Arr::get($connection_settings['connection'], 'dsn', ':'));
+					if (!in_array($parts[0], array('mysql', 'sqlite', 'pgsql', 'oci', 'sqlsrv')))
 						throw new DoctrineException('Unsupported driver '.$parts[0]);
-					$driver = 'pdo_'.$parts[0];
-					$conf = explode(';',$parts[1]);
-					foreach ($conf as $opt) {
-						$v = explode('=',$opt);
-						$options[$v[0]]=$v[1];
+					$options['driver'] = 'pdo_'.$parts[0];
+					$conf = explode(';', $parts[1]);
+					foreach ($conf as $opt)
+					{
+						$v = explode('=', $opt);
+						$options[$v[0]] = $v[1];
 					}
 					break;
 				default:
-					throw new DoctrineException('Unsupported connection type '.$settings['type']);
+					throw new DoctrineException('Unsupported connection type '.$connection_settings['type']);
 			}
 		}
 
 		$options = array_filter($options);
-
-		if (!isset($settings['connection']['driver']))
-		{
-			if (isset(static::$settings['driver']))
-				$settings['connection']['driver'] = static::$settings['driver'];
-			elseif (!empty($driver))
-				$settings['connection']['driver'] = $driver;
-		}
-
-		$settings['connection'] = array_merge($options, $settings['connection']);
-
-		if (!isset($settings['connection']['charset']))
-		{
-			if (isset($settings['charset']))
-				$settings['connection']['charset'] = $settings['charset'];
-			elseif (isset(static::$settings['charset']) and is_string(static::$settings['charset']))
-				$settings['connection']['charset'] = static::$settings['charset'];
-		}
-
-		if (!isset($settings['connection']['persistent']))
-		{
-			if (isset(static::$settings['persistent']) and !is_array(static::$settings['persistent']))
-				$settings['connection']['persistent'] = static::$settings['persistent'];
-		}
-
-		if (!isset($settings['connection']['compress']))
-		{
-			if (isset(static::$settings['compress']) and !is_array(static::$settings['compress']))
-				$settings['connection']['compress'] = static::$settings['compress'];
-		}
+		$settings['connection'] = array_merge($options, $connection_settings['connection']);
+		$settings['profiling'] = \Arr::get($connection_settings, 'profiling', false);
 
 		return $settings;
 	}
@@ -262,9 +191,8 @@ class Doctrine
 	 */
 	public static function manager($connection = null)
 	{
-		if (empty($connection)) {
+		if (empty($connection))
 			$connection = static::$settings['active'];
-		}
 
 		if (!isset(static::$_managers[$connection]))
 			static::_init_manager($connection);
