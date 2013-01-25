@@ -2,39 +2,41 @@
 
 ## About
 
-This package contains a basic wrapper around the Doctrine 2 ORM functionality for access via a FuelPHP package. It is distributed under the same LGPL license as Doctrine itself.
+This package contains a basic wrapper around the Doctrine 2 ORM functionality for access using the FuelPHP framework. It is distributed under the same LGPL license as Doctrine itself.
 
 
 ## How to install
 
-You can install this package with Composer. So first you'll need Composer. About Composer http://getcomposer.org/
+You can install this package with Composer. So first you'll need Composer, which can be found at http://getcomposer.org/
 
-1. If your application doesn't have `composer.json` please create it.
-2. Simply add additional `require`
+1. If your application doesn't have a `composer.json` file please create it.
+2. Add an additional `require`
 ```
 "aspendigital/fuel-doctrine2": "dev-master"
 ```
 3. Install with `composer install`
 
-## How to configure
+## Quick start
 
-Configuration is really simple. It supports same database parameters as Fuel database configuration. In fact it uses same config file. There will need just to add additional Doctrine configuration options.
+Configuration is simple and involves adding additional Doctrine configuration options to your FuelPHP db.php config.
 
-To get running quickly:
+To get running quickly, there are only three required settings:
 
-in `app/config/db.php` to config array add
+in `app/config/db.php` add
 ```php
-'proxy_dir' => APPPATH . 'classes' . DS . 'proxy',
-'proxy_namespace' => 'Proxy',
-'metadata_path' => APPPATH . 'classes' . DS . 'entity',
+'doctrine2'=>array(
+	'proxy_dir' => APPPATH . 'classes' . DS . 'proxy',
+	'proxy_namespace' => 'Proxy',
+	'metadata_path' => APPPATH . 'classes' . DS . 'entity'
+)
 ```
-and of course configure database settings (user, password etc) same as like you do for Fuel.
+and of course configure database settings (user, password etc) as you would normally do for Fuel.
 
 ## How to use
-when you've configured application, to get an EntityManager, use the following code:
+when you've configured your application, to get an EntityManager, use the following code:
 
 ```php
-$em = \Fuel\Doctrine::manager(); // Uses the connection labeled 'default' in your configuration
+$em = \Fuel\Doctrine::manager(); // Uses the connection referred to by the 'active' index in your configuration
 $em = \Fuel\Doctrine::manager('connection_2'); // Specify connection explicitly
 ```
 
@@ -44,77 +46,121 @@ Or you can check the versions of the Doctrine components:
 print_r(\Fuel\Doctrine::version_check());
 ```
 
-## Configuration options
+## Typical configuration example
+Using the cascading configuration files that FuelPHP offers, a typical configuration looks something like:
 
-Options can be configured in either `app/config/db.php` or in `app/config/ENVIROMENT/db.php` (the latter will take precedence)
-
-Example:
+`app/config/db.php`:
 ```php
 return array(
-    'auto_generate_proxy_classes' => true,
-    'proxy_dir' => APPPATH . 'classes' . DS . 'proxy',
-    'proxy_namespace' => 'Proxy',
-    'metadata_path' => APPPATH . 'classes' . DS . 'entity',
-    'metadata_driver' => 'yaml'
-    'production' => array(
-        'type'           => 'pdo',
-        'connection'     => array(
-            'dsn'            => 'pgsql:host=localhost;dbname=fuel_db',
-            'username'       => 'your_username',
-            'password'       => 'y0uR_p@ssW0rd',
-            'persistent'     => false,
-            'compress'       => false,
-        ),
-        'charset'        => 'utf8',
-        'enable_cache'   => true,
-        'profiling'      => false,
-        'cache_driver'   => 'apc'
-    )
+	'active'=>'default',
+
+	'doctrine2'=>array(
+		'proxy_dir'       => APPPATH . 'classes' . DS . 'proxy',
+		'proxy_namespace' => 'Proxy',
+		'metadata_path'   => APPPATH . 'classes' . DS . 'entity',
+		'metadata_driver' => 'annotation'
+	)
+
+	/**
+	 * Base config, just need to set the DSN, username and password in env. config.
+	 */
+	'default' => array(
+		'type'        => 'pdo',
+		'connection'  => array(
+			'persistent' => false,
+			'compress'   => false
+		),
+		'charset'      => 'utf8',
+		'profiling'    => false
+	)
 );
 ```
 
-For these refer to [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/configuration.html) and [Doctrine DBAL](https://github.com/doctrine/dbal/blob/master/docs/en/reference/configuration.rst) documentation
-* `proxy_dir` - [C][G]
-* `proxy_namespace` - [C][G]
-* `metadata_path` - [C][G]
-* `metadata_driver` - [C][G]
-* `auto_generate_proxy_classes` - [C][G]
-* `cache_driver` - [C][G]
-* `driver` - [D][C][G]
+`app/config/development/db.php`:
+```php
+return array(
+	'doctrine2'=>array(
+		'auto_generate_proxy_classes' => true
+	),
 
-Refer to [Fuel database configuration](http://fuelphp.com/docs/classes/database/introduction.html)
-* `type` - [C]
-* `enable_cache` - [C][G]
-* `charset` - [D][C][G]
-* `profiling` - [C][G]
-* `connection.persistent` - [D][G]
-* `connection.compress` - [D][G]
+	'default'=>array(
+		'connection'  => array(
+			'dsn'            => 'pgsql:host=localhost;dbname=fuel_db',
+            'username'       => 'your_username',
+            'password'       => 'y0uR_p@ssW0rd'
+		)
+		'profiling'   => true
+	)
+);
+```
 
+`app/config/production/db.php`:
+```php
+return array(
+	'doctrine2'=>array(
+		'auto_generate_proxy_classes'   => false,
+		'cache_driver'                  => 'apc'
+	),
 
-`connection` supports all Doctrine DBAL options and will take precedence over Fuel options.
+	'default'=>array(
+		'connection'  => array(
+			'dsn'            => 'pgsql:host=production_server;dbname=fuel_db',
+            'username'       => 'your_username',
+            'password'       => 'y0uR_p@ssW0rd'
+		)
+		'profiling'    => false
+	)
+);
+```
 
+In the development environment, we use the default array cache (nothing is saved permanently) and enable profiling. In the production environment, we leave profiling off and use APC (or some other caching solution).
 
-Configuration options can be specified in multiple places.
-* [D] - means this option will be taken from `connection` array if it exists there.
-* [C] - option will be taken from configuration.
-* [G] - is global and will be taken from outside of configuration.
+### Connection setting override
+If for some reason you need to override Doctrine2 settings on a connection-by-connection basis, include a `doctrine2` key in your connection settings:
+```php
+return array(
 
-In `db.php` config example above `proxy_dir` isn't defined in [C] so it will be taken from [G] and `charset` isn't in [D] so [C] will be used.
+	'default'=>array(
+		'connection'  => array(
+			'dsn'            => 'pgsql:host=production_server;dbname=fuel_db',
+            'username'       => 'your_username',
+            'password'       => 'y0uR_p@ssW0rd'
+		)
+		'profiling'    => false,
+		'doctrine2'    => array(
+			'cache_driver'   => 'zend' // Override the cache driver only for the 'default' connection
+		)
+	)
+);
+```
 
-## PHP Quick Profiler
+### Configuration options
 
-No configuration required and all queries can be seen with correct EXPLAIN details. But you've to enable profiling.
+Refer to the [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm/en/latest/reference/configuration.html) documentation
+* `proxy_dir`: the directory containing your proxy classes 
+* `proxy_namespace`: the namespace where the proxy classes reside
+* `metadata_path`: the directory containing your metadata
+* `metadata_driver: options are 'annotation' (default), 'php', 'simplified_xml', 'simplified_yaml', 'xml', 'yaml'
+* `auto_generate_proxy_classes`: true/false for whether Doctrine should generate proxy classes for entities it loads
+* `cache_driver`: options are 'array' (default), 'apc', 'xcache', 'wincache', 'zend'
 
-## Versions:
+On connection:
+* `driver`: we try to guess the DBAL driver to load to connect to your database, but you may have to set this if the guessing doesn't work for you
+* Consult the [Doctrine DBAL](https://github.com/doctrine/dbal/blob/master/docs/en/reference/configuration.rst) documentation for other DBAL-specific options
 
-* Doctrine Common: 2.2.0
-* Doctrine DBAL: 2.2.1
-* Doctrine ORM: 2.2.1
+For FuelPHP options, refer to [Fuel database configuration](http://fuelphp.com/docs/classes/database/introduction.html)
+* `type`
+* `charset`
+* `profiling`
+* `enable_cache`: in our case, there is always some caching taking place, but it's only temporary unless you've changed the `cache_driver` setting
+* `connection.persistent`
+* `connection.compress`
+
+## Profiling
+
+No configuration is required beyond enabling profiling for your connection. Queries sent through Doctrine ORM and directly through DBAL will automatically appear in the Fuel profiler.
 
 # Doctrine 2 ORM
-
-Master: [![Build Status](https://secure.travis-ci.org/doctrine/doctrine2.png?branch=master)](http://travis-ci.org/doctrine/doctrine2)
-2.1.x: [![Build Status](https://secure.travis-ci.org/doctrine/doctrine2.png?branch=2.1.x)](http://travis-ci.org/doctrine/doctrine2)
 
 Doctrine 2 is an object-relational mapper (ORM) for PHP 5.3.2+ that provides transparent persistence for PHP objects. It sits on top of a powerful database abstraction layer (DBAL). One of its key features is the option to write database queries in a proprietary object oriented SQL dialect called Doctrine Query Language (DQL), inspired by Hibernates HQL. This provides developers with a powerful alternative to SQL that maintains flexibility without requiring unnecessary code duplication.
 
