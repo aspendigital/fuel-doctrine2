@@ -179,6 +179,9 @@ class Doctrine
 			}
 		}
 
+		if (isset($connection_settings['charset']))
+			$options['charset'] = $connection_settings['charset'];
+			
 		$options = array_filter($options);
 		$settings['connection'] = array_merge($options, $connection_settings['connection']);
 		$settings['profiling'] = \Arr::get($connection_settings, 'profiling', false);
