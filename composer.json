@@ -2,7 +2,6 @@
     "name": "aspendigital/fuel-doctrine2",
     "type": "library",
     "description": "Doctrine2 integration with FuelPHP",
-	"version": "1.0",
     "license": "LGPL-2.1+",
     "require": {
         "doctrine/orm": ">=2.3.0"
