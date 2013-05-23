@@ -90,6 +90,16 @@ class Doctrine
 
 		if (!empty($settings['profiling']))
 			static::$_managers[$connection]->getConnection()->getConfiguration()->setSQLLogger(new Doctrine\Logger($connection));
+
+		// Connection init callback
+		if (!empty($settings['init_callback']))
+		{
+			// If array merge combined this numeric array, grab last two array elements as the real callback
+			if (is_array($settings['init_callback']) && count($settings['init_callback']) > 2)
+				$settings['init_callback'] = array_slice($settings['init_callback'], -2);
+
+			call_user_func($settings['init_callback'], static::$_managers[$connection], $connection);
+		}
 	}
 
 	/**
@@ -138,10 +148,10 @@ class Doctrine
 		$settings = static::$settings['doctrine2'];
 		if (isset($connection_settings['doctrine2']))
 		{
-			$settings = array_merge($settings, $connection_settings['doctrine2']);
+			$settings = array_replace($settings, $connection_settings['doctrine2']);
 			unset($connection_settings['doctrine2']);
 		}
-				
+
 		// Required settings
 		foreach (array('metadata_path', 'proxy_dir', 'proxy_namespace') as $key)
 		{
@@ -185,6 +195,7 @@ class Doctrine
 		$options = array_filter($options);
 		$settings['connection'] = array_merge($options, $connection_settings['connection']);
 		$settings['profiling'] = \Arr::get($connection_settings, 'profiling', false);
+		$settings['init_callback'] = \Arr::get($settings, 'init_callback');
 
 		return $settings;
 	}

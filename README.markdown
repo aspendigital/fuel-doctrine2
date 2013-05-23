@@ -58,7 +58,8 @@ return array(
 		'proxy_dir'       => APPPATH . 'classes' . DS . 'proxy',
 		'proxy_namespace' => 'Proxy',
 		'metadata_path'   => APPPATH . 'classes' . DS . 'entity',
-		'metadata_driver' => 'annotation'
+		'metadata_driver' => 'annotation',
+		'init_callback'   => array('MyClass', 'init')
 	)
 
 	/**
@@ -143,6 +144,22 @@ Refer to the [Doctrine 2](http://docs.doctrine-project.org/projects/doctrine-orm
 * `metadata_driver`: options are 'annotation' (default), 'php', 'simplified_xml', 'simplified_yaml', 'xml', 'yaml'
 * `auto_generate_proxy_classes`: true/false for whether Doctrine should generate proxy classes for entities it loads
 * `cache_driver`: options are 'array' (default), 'apc', 'xcache', 'wincache', 'zend'
+* `init_callback`: A 'callable' value which will be run when the EntityManager is instantiated. This can be used to set up custom DBAL types or otherwise customize the environment.
+
+`app/classes/myclass.php`:
+```php
+class MyClass
+{
+	/**
+	 * @param \Doctrine\ORM\EntityManager $manager
+	 * @param string $connection
+	 */
+	public static function init($manager, $connection)
+	{
+		...
+	}
+}
+```
 
 On connection:
 * `driver`: we try to guess the DBAL driver to load to connect to your database, but you may have to set this if the guessing doesn't work for you
