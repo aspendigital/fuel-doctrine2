@@ -3,7 +3,7 @@
 namespace Fuel\Doctrine;
 
 /**
- * Log Doctrine DBAL queries to FuelPHP profiler
+ * Log Doctrine DBAL queries to FuelPHP profiler and internal array
  */
 class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 {
@@ -12,6 +12,9 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 
 	/** @var mixed */
 	protected $benchmark;
+	
+	/** @var array */
+	protected $queries = array();
 
 	/**
 	 * @param string $db_name database name to save in profiler
@@ -78,6 +81,7 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 		}
 
 		$this->benchmark = \Profiler::start("Database (Doctrine: $this->db_name)", $sql);
+		$this->queries[] = $sql;
 	}
 
 	public function stopQuery()
@@ -87,5 +91,13 @@ class Logger implements \Doctrine\DBAL\Logging\SQLLogger
 			\Profiler::stop($this->benchmark);
 			$this->benchmark = null;
 		}
+	}
+	
+	/**
+	 * @return array
+	 */
+	public function getQueries()
+	{
+		return $this->queries;
 	}
 }
